@@ -1,0 +1,71 @@
+#!/usr/bin/env node
+/* eslint-disable @typescript-eslint/explicit-function-return-type */
+/* eslint-disable @typescript-eslint/no-var-requires */
+/* eslint-disable import/no-extraneous-dependencies */
+/* eslint-disable no-console */
+
+const chalk = require('chalk');
+const program = require('commander');
+const shell = require('shelljs');
+
+const configureServiceAccount = ({
+  project,
+  serviceAccount,
+}, serviceName, region) => {
+  if (!project) { throw new Error('Missing project'); }
+  if (!serviceAccount) { throw new Error('Missing serviceAccount'); }
+  if (!serviceName) { throw new Error('Missing serviceName'); }
+  if (!region) { throw new Error('Missing region'); }
+
+  // Check if service account exists
+  shell.config.silent = true;
+  const checkServiceAccount = shell.exec(`gcloud iam service-accounts describe ${serviceAccount}@${project}.iam.gserviceaccount.com`);
+  shell.config.silent = false;
+  if (checkServiceAccount.code !== 0) {
+    // Create service account
+    const createServiceAccountCmd = `gcloud iam service-accounts create ${serviceAccount} --display-name "${serviceName} invoker account"`;
+    console.log(chalk.blackBright(`$ ${createServiceAccountCmd}`));
+    const createServiceAccount = shell.exec(createServiceAccountCmd);
+
+    if (createServiceAccount.code !== 0) { process.exit(createServiceAccount.code); }
+  }
+
+  const policyBindingCmd = `gcloud run services add-iam-policy-binding ${serviceName}`
+      + ` --member=serviceAccount:${serviceAccount}@${project}.iam.gserviceaccount.com`
+      + ' --role=roles/run.invoker'
+      + ' --platform managed'
+      + ` --region ${region}`;
+  console.log(chalk.blackBright(`$ ${policyBindingCmd}`));
+  const policyBinding = shell.exec(policyBindingCmd);
+  if (policyBinding.code !== 0) { process.exit(policyBinding.code); }
+};
+
+program.version('0.0.1');
+
+program
+  .command('cloud-run <configFile>')
+  .option('--project <project>', "The GCP Project's ID")
+  .option('--region <region>', 'The GCP region')
+  .option('--service-account <serviceAccount>', 'The service account name of authentication')
+  .option('--service-name <serviceName>', 'The Cloud Run service name')
+  .description('Configure Google Cloud for GCP Jobs')
+  .action((configFile, {
+    project,
+    region,
+    serviceAccount,
+    serviceName,
+  }) => {
+    try {
+      // eslint-disable-next-line global-require, import/no-dynamic-require
+      const config = require(configFile);
+      if (project) { config.project = project; }
+      if (serviceAccount) { config.serviceAccount = serviceAccount; }
+      if (serviceName) { config.serviceName = serviceName; }
+      configureServiceAccount(config, serviceName, region);
+    } catch (e) {
+      console.error(e.message);
+      process.exit(1);
+    }
+  });
+
+program.parse(process.argv);
