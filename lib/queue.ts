@@ -1,5 +1,6 @@
 /* eslint-disable no-underscore-dangle */
 import { CloudTasksClient, v2 } from '@google-cloud/tasks';
+import { google } from '@google-cloud/tasks/build/protos/protos';
 
 import { CloudTasksConfig, validateConfig } from './config';
 import { CloudTasksError } from './error';
@@ -39,7 +40,13 @@ export class CloudTasksQueue {
   async addTask(
     handlerId: string,
     args: unknown[] = [],
-    { scheduleTime }: { scheduleTime?: number } = {},
+    {
+      dispatchDeadline, // https://cloud.google.com/tasks/docs/reference/rest/v2beta3/projects.locations.queues.tasks#Task.FIELDS.dispatch_deadline
+      scheduleTime, // https://cloud.google.com/tasks/docs/reference/rest/v2beta3/projects.locations.queues.tasks#Task.FIELDS.schedule_time
+    }: {
+      dispatchDeadline?: number, // milliseconds
+      scheduleTime?: Date,
+    } = {},
   ): Promise<void> {
     const {
       handlerPath,
@@ -49,14 +56,13 @@ export class CloudTasksQueue {
     } = this.config;
     const cloudTasksQueue = await this.getCloudTaskQueue();
     const payload: CloudTasksPayload = { handlerId, args };
-    const taskScheduleTime = scheduleTime ? { scheduleTime: { seconds: scheduleTime / 1000 } } : {};
     const oidcToken = serviceAccount
       ? { oidcToken: { serviceAccountEmail: `${serviceAccount}@${project}.iam.gserviceaccount.com` } }
       : {};
 
     await this.cloudTasksClient.createTask({
       parent: cloudTasksQueue.name,
-      task: {
+      task: { // https://cloud.google.com/tasks/docs/reference/rest/v2beta3/projects.locations.queues.tasks#Task
         httpRequest: {
           httpMethod: 'POST',
           url: new URL(handlerPath, serviceUrl).href,
@@ -66,7 +72,8 @@ export class CloudTasksQueue {
           body: Buffer.from(JSON.stringify(payload)).toString('base64'),
           ...oidcToken,
         },
-        ...taskScheduleTime,
+        ...(dispatchDeadline ? { dispatchDeadline: this.buildGoogleDuration(dispatchDeadline) } : {}),
+        ...(scheduleTime ? { scheduleTime: this.buildGoogleTimestamp(scheduleTime) } : {}),
       },
     });
   }
@@ -93,6 +100,14 @@ export class CloudTasksQueue {
       minBackoff: minBackoff ? { seconds: minBackoff } : null,
       maxBackoff: maxBackoff ? { seconds: maxBackoff } : null,
     };
+  }
+
+  private buildGoogleDuration(milliseconds: number): google.protobuf.IDuration {
+    return { seconds: milliseconds / 1000 };
+  }
+
+  private buildGoogleTimestamp(date: Date): google.protobuf.ITimestamp {
+    return { seconds: date.getTime() / 1000 };
   }
 
   // eslint-disable-next-line @typescript-eslint/explicit-function-return-type

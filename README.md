@@ -40,8 +40,9 @@ myQueue.addTask('the-handler-id', ['this day was crazy']);
 myQueue.addTask(
   'the-handler-id',
   ['this will be crazy'],
-  {
-    scheduleTime: 60000 + Date.now(), // Delayed in 60 seconds
+  { // https://cloud.google.com/tasks/docs/reference/rest/v2beta3/projects.locations.queues.tasks#Task.FIELDS
+    dispatchDeadline: 30000, // milliseconds
+    scheduleTime: new Date(60000 + Date.now()), // delayed in 60 seconds
   }
 );
 
