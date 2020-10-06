@@ -1,4 +1,4 @@
-import CloudTasksError from './error';
+import { CloudTasksError } from './error';
 
 export interface CloudTasksConfig {
   handlerPath: string;

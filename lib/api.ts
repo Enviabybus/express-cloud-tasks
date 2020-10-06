@@ -4,15 +4,11 @@ import bodyParser from 'body-parser';
 import express, { Router } from 'express';
 
 import { CloudTasksConfig, validateConfig } from './config';
-import { CloudTasksPayload, queuesHandlers } from './queue';
+import { CloudTasksPayload } from './queue';
 
-export const Api = (
-  {
-    config,
-  }: {
-    config: CloudTasksConfig;
-  },
-  loader?: (queueName: string, handlerId: string, args: any[]) => Promise<void>,
+export const CloudTasksApi = (
+  config: CloudTasksConfig,
+  loader: (queueName: string, handlerId: string, args: any[]) => Promise<void>,
 ): Router => {
   validateConfig(config);
   const router = express.Router();
@@ -62,25 +58,12 @@ export const Api = (
       const queueName = req.headers['x-cloudtasks-queuename'] as string;
       const { handlerId, args = [] } = payload;
 
-      if (loader) {
-        await loader(queueName, handlerId, args);
-      } else {
-        const handlers = queuesHandlers[queueName] || {};
-        const handler = handlers[handlerId];
-
-        if (!handler) {
-          console.error(`error: handler '${handlerId}' for queue '${queueName}' not registered`);
-          res.sendStatus(204);
-          return;
-        }
-
-        await handler(...args);
-      }
+      await loader(queueName, handlerId, args);
 
       res.sendStatus(204);
-    } catch (e) {
-      console.error(e);
-      res.status(500).send(`Internal Server Error: ${e.message}`);
+    } catch (error) {
+      console.error(error);
+      res.status(200).json({ error });
     }
   });
 

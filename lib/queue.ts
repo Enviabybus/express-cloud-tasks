@@ -2,7 +2,7 @@
 import { CloudTasksClient, v2 } from '@google-cloud/tasks';
 
 import { CloudTasksConfig, validateConfig } from './config';
-import CloudTasksError from './error';
+import { CloudTasksError } from './error';
 
 type CloudTasksHandler = (...args: unknown[]) => unknown;
 
@@ -11,13 +11,10 @@ export interface CloudTasksPayload {
   args: any[];
 }
 
-// export const queuesHandlers: { [id: string]: { [id: string]: CloudTasksHandler } } = {};
-export const queuesHandlers: Record<string, Record<string, CloudTasksHandler>> = {};
-
-export class Queue {
+export class CloudTasksQueue {
   config: CloudTasksConfig;
-
   name: string;
+  handlers: Record<string, CloudTasksHandler> = {};
 
   private _cloudTasksClient?: v2.CloudTasksClient;
 
@@ -25,15 +22,14 @@ export class Queue {
     validateConfig(config);
     this.config = config;
     this.name = name;
-    queuesHandlers[name] = {};
   }
 
   addHandler(handlerId: string, handler: CloudTasksHandler): void {
-    queuesHandlers[this.name][handlerId] = handler;
+    this.handlers[handlerId] = handler;
   }
 
   getHandler(id: string): CloudTasksHandler {
-    const handler = queuesHandlers[this.name][id];
+    const handler = this.handlers[id];
 
     if (!handler) { throw new CloudTasksError(`Handler '${id}' not found`); }
 

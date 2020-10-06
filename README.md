@@ -19,19 +19,18 @@ yarn add @enviabybus/express-cloud-tasks
 
 ```js
 const express = require('express');
-const { CloudTasksApi, CloudTasksQueue } = require('express-cloud-tasks');
+const { CloudTasks } = require('express-cloud-tasks');
 
 const app = express();
 
-const cloudTasksConfig = {
+const cloudTasks = CloudTasks({
   handlerPath: '/my-cloud-tasks-handler',
   location: 'us-central1', // The region where your App Engine is configured
   project: 'awesome-project-1234',
   serviceUrl: 'https://awesome-project-uc.a.run.app',
-};
+});
 
-app.use(CloudTasksApi(cloudTasksConfig));
-const myQueue = new CloudTasksQueue('my-queue', cloudTasksConfig);
+const myQueue = cloudTasks.addQueue('my-queue');
 
 myQueue.addHandler('the-handler-id', (message) => {
   console.log(message);
@@ -45,6 +44,8 @@ myQueue.addTask(
     scheduleTime: 60000 + Date.now(), // Delayed in 60 seconds
   }
 );
+
+app.use(cloudTasks.api);
 ```
 
 Cloud Tasks will call the handler API and log `this day was crazy` and `this day will be crazy`
@@ -56,15 +57,15 @@ First you need to configure a service account to invoke your service. After that
 have to add the service account name on you Cloud Task config:
 
 ```js
-const cloudTasksConfig = {
+const cloudTasks = CloudTasks({
   handlerPath: '/my-cloud-tasks-handler',
   location: 'us-central1', // The region where your App Engine is configured
   project: 'awesome-project-1234',
   serviceUrl: 'https://awesome-project-uc.a.run.app',
   serviceAccount: 'my-service-invoker-service-account',
-};
+});
 
-app.use(CloudTasksApi(cloudTasksConfig));
+app.use(cloudTasks.api);
 ```
 
 ### Configuring Cloud Task queues
@@ -90,5 +91,7 @@ const cloudTasksConfig = {
 };
 ```
 
-The queue is created and configured in the first run. To change the configuration after the queue
-was created, you have to delete the queue manually and run some task again.
+## Notice
+
+> The queue will be created and configured in the first run. To change the configuration after the queue
+  was created, you have to delete the queue manually and run some task again.

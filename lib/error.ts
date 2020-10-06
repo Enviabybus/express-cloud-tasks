@@ -1,3 +1,1 @@
-class CloudTasksError extends Error { }
-
-export default CloudTasksError;
+export class CloudTasksError extends Error { }
