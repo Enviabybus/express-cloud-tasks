@@ -102,21 +102,6 @@ export class CloudTasksQueue {
     };
   }
 
-  private async createQueue(): Promise<google.cloud.tasks.v2.IQueue> {
-    const { project, location } = this.config;
-    const queuePath = this.cloudTasksClient.queuePath(project, location, this.name);
-    const locationPath = this.cloudTasksClient.locationPath(project, location);
-    const response = await this.cloudTasksClient.createQueue({
-      parent: locationPath,
-      queue: {
-        name: queuePath,
-        rateLimits: { ...this.config.rateLimits || {} },
-        retryConfig: { ...this.buildCloudTasksQueueRetryConfig() },
-      },
-    });
-    return response[0];
-  }
-
   private buildGoogleDuration(milliseconds: number): google.protobuf.IDuration {
     return { seconds: milliseconds / 1000 };
   }
@@ -135,6 +120,22 @@ export class CloudTasksQueue {
     } catch (e) {
       return this.createQueue();
     }
+  }
+
+  private async createQueue(): Promise<google.cloud.tasks.v2.IQueue> {
+    const { project, location } = this.config;
+    const queuePath = this.cloudTasksClient.queuePath(project, location, this.name);
+    const locationPath = this.cloudTasksClient.locationPath(project, location);
+    const response = await this.cloudTasksClient.createQueue({
+      parent: locationPath,
+      queue: {
+        name: queuePath,
+        rateLimits: { ...this.config.rateLimits || {} },
+        retryConfig: { ...this.buildCloudTasksQueueRetryConfig() },
+      },
+    });
+    console.log(`[express-cloud-tasks] Created queue: ${queuePath}`);
+    return response[0];
   }
 
   private didQueueChanged(queue: google.cloud.tasks.v2.IQueue): boolean {
@@ -180,6 +181,7 @@ export class CloudTasksQueue {
     if (retryConfig) { queue.retryConfig = this.buildCloudTasksQueueRetryConfig(); }
     const response = await this.cloudTasksClient.updateQueue({ queue });
 
+    console.log(`[express-cloud-tasks] Updated queue: ${queue.name}`);
     return response[0];
   }
 }
