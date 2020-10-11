@@ -84,15 +84,10 @@ const cloudTasksConfig = {
   },
   retryConfig: { // https://cloud.google.com/tasks/docs/reference/rest/v2beta3/projects.locations.queues#retryconfig
     maxAttempts: number,
-    maxRetryDuration: number, // in seconds
-    minBackoff: number, // in seconds
-    maxBackoff: number, // in seconds
+    maxRetryDuration: number, // in milliseconds
+    minBackoff: number, // in milliseconds
+    maxBackoff: number, // in milliseconds
     maxDoublings: number,
   };
 };
 ```
-
-## Notice
-
-> The queue will be created and configured in the first run. To change the configuration after the queue
-  was created, you have to delete the queue manually and run some task again.
