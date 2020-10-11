@@ -72,7 +72,7 @@ app.use(cloudTasks.api);
 ### Configuring Cloud Task queues
 
 ```js
-const cloudTasksConfig = {
+const cloudTasks = CloudTasks({
   handlerPath: '/my-cloud-tasks-handler',
   location: 'us-central1', // The region where your App Engine is configured
   project: 'awesome-project-1234',
@@ -89,5 +89,22 @@ const cloudTasksConfig = {
     maxBackoff: number, // in milliseconds
     maxDoublings: number,
   };
-};
+});
+
+const myQueue = cloudTasks.addQueue('my-queue'); // Uses CloudTasks queue configuration
+
+const mySecondQueue = cloudTasks.addQueue('my-second-queue', { // overrides CloudTasks queue configuration
+  rateLimits: {
+    maxDispatchesPerSecond: number,
+    maxBurstSize: number,
+    maxConcurrentDispatches: number
+  },
+  retryConfig: {
+    maxAttempts: number,
+    maxRetryDuration: number, // in milliseconds
+    minBackoff: number, // in milliseconds
+    maxBackoff: number, // in milliseconds
+    maxDoublings: number,
+  };
+});
 ```
