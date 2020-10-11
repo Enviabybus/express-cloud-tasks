@@ -1,5 +1,5 @@
 import { CloudTasksApi } from './api';
-import { CloudTasksConfig } from './config';
+import { CloudTasksConfig, QueueOptions } from './config';
 import { CloudTasksError } from './error';
 import { CloudTasksQueue } from './queue';
 
@@ -16,8 +16,12 @@ export const CloudTasks = (config: CloudTasksConfig) => {
   return {
     api,
 
-    addQueue(queueName: string): CloudTasksQueue {
-      const queue = new CloudTasksQueue(queueName, config);
+    addQueue(queueName: string, options: QueueOptions = {}): CloudTasksQueue {
+      const queueConfig = {
+        ...config,
+        ...options,
+      }
+      const queue = new CloudTasksQueue(queueName, queueConfig);
       queues[queueName] = queue;
 
       return queue;
@@ -27,4 +31,5 @@ export const CloudTasks = (config: CloudTasksConfig) => {
 
 export default CloudTasks;
 export { CloudTasksApi } from './api';
+export { CloudTasksConfig, QueueOptions } from './config';
 export { CloudTasksQueue } from './queue';

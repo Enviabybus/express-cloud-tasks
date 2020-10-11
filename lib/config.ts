@@ -1,11 +1,14 @@
 import { CloudTasksError } from './error';
 
-export interface CloudTasksConfig {
+export type CloudTasksConfig = {
   handlerPath: string;
   location: string;
   project: string;
   serviceAccount?: string;
   serviceUrl: string;
+} & QueueOptions;
+
+export interface QueueOptions {
   rateLimits?: {
     maxDispatchesPerSecond?: number;
     maxBurstSize?: number;
