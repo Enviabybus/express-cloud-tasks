@@ -63,7 +63,7 @@ export const CloudTasksApi = (
       res.sendStatus(204);
     } catch (error) {
       console.error(error);
-      res.status(200).json({ error });
+      res.status(500).json({ error });
     }
   });
 

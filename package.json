@@ -1,6 +1,6 @@
 {
   "name": "@enviabybus/express-cloud-tasks",
-  "version": "0.1.3",
+  "version": "0.1.5",
   "description": "Express Cloud Tasks abstraction",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
