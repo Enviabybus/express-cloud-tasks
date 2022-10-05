@@ -108,3 +108,26 @@ const mySecondQueue = cloudTasks.addQueue('my-second-queue', { // overrides Clou
   };
 });
 ```
+
+## Creating a service account to associate with the tasks
+1. Create the service account:
+```
+gcloud iam service-accounts create SERVICE_ACCOUNT_NAME \
+   --display-name "DISPLAYED_SERVICE_ACCOUNT_NAME"
+```
+Replace:
+ - SERVICE_ACCOUNT_NAME with a lower case name unique within your Google Cloud project, for example my-invoker-service-account-name.
+ - DISPLAYED_SERVICE_ACCOUNT_NAME with the name you want to display for this service account, for example, in the console, for example, My Invoker Service Account.
+
+2. For Cloud Run, give your service account permission to invoke your service:
+```
+gcloud run services add-iam-policy-binding SERVICE \
+   --member=serviceAccount:SERVICE_ACCOUNT_NAME@PROJECT_ID.iam.gserviceaccount.com \
+   --role=roles/run.invoker
+```
+Replace:
+ - SERVICE with the name of the service you want to be invoked by Cloud Tasks.
+ - SERVICE_ACCOUNT_NAME with the name of the service account.
+ - PROJECT_ID with your Google Cloud project ID.
+
+More details in [Cloud Google](https://cloud.google.com/run/docs/triggering/using-tasks#command-line_1 "Cloud Google") web site.
